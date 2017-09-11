@@ -82,7 +82,12 @@ public class Square extends Shape {
 
 		return Math.sqrt(lengthA * lengthA + lengthB * lengthB);
 	}
-
+	
+	@Override
+	public double getMaxSide() {
+		return getLength(points[0], points[1]);
+	}
+	
 	@Override
 	public double getPerimetr() {
 		return getLength(points[0], points[1]) * 4;

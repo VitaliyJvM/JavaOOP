@@ -90,6 +90,14 @@ public class Triangle extends Shape {
 		return Math.sqrt(lengthA * lengthA + lengthB * lengthB);
 	}
 
+
+	@Override
+	public double getMaxSide() {
+		double maxSide = Math.max(getLength(pointA,pointB),getLength(pointB,pointC));
+		maxSide = Math.max(maxSide,getLength(pointA,pointC));
+		return maxSide;
+	}
+	
 	@Override
 	public double getPerimetr() {
 		return getLength(pointA,pointB) + getLength(pointB,pointC) + getLength(pointA,pointC);

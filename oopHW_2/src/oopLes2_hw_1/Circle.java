@@ -66,6 +66,12 @@ public class Circle extends Shape {
 		this.fillColor = fillColor;
 	}
 
+	
+	@Override
+	public double getMaxSide() {
+		return 2 * radius;
+	}
+	
 	@Override
 	public double getPerimetr() {
 		return 2 * Math.PI * radius;
