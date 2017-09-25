@@ -1,10 +1,17 @@
 package mvs;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Comparator;
 import javax.swing.JOptionPane;
 
-public class Group implements Voenkom{
+public class Group implements Voenkom {
+
+	private boolean outToFile = false; // false-display, true-file
 
 	class SortedByName implements Comparator<Student> {
 
@@ -151,10 +158,88 @@ public class Group implements Voenkom{
 		}
 		return sb.toString();
 	}
-	
+
+	public void toFile() {
+
+		String fn = "group.txt";
+		try (PrintWriter pw = new PrintWriter(fn)) {
+			pw.println(groupID);
+			for (Student stu : arrStudents) {
+				if (stu == null)
+					continue;
+
+				String sBirthDate = stu.getBirthDateToString();
+				if (sBirthDate.equals(""))
+					sBirthDate = "null";
+
+				pw.println(stu.getFirstName() + ";" + stu.getLastName() + ";" + ((stu.isSex()) ? 1 : 0) + ";"
+						+ sBirthDate);
+			}
+			pw.close();
+		} catch (FileNotFoundException e) {
+			System.out.println("ERROR FILE WRITE");
+		}
+	}
+
+	public void importGroup() {
+
+		String fn = "group.txt";
+
+		FileReader fileReader;
+		BufferedReader reader;
+		String line = null;
+
+		// clean
+		for (int i = 0; i < arrStudents.length; i += 1) {
+			arrStudents[i] = null;
+		}
+
+		try {
+			fileReader = new FileReader(fn);
+			reader = new BufferedReader(fileReader);
+
+			try {
+				reader.read();
+				boolean isFirstRow = true;
+				while ((line = reader.readLine()) != null) {
+					if (isFirstRow) {
+						setGroupID(line);
+						isFirstRow = false;
+						continue;
+					}
+
+					String[] subStrings = line.split(";");
+					if (subStrings.length != 4) {
+						System.out.println("Wrong string in file: " + line);
+						continue;
+					}
+					int a;
+					try {
+						a = Integer.valueOf(subStrings[2]);
+					} catch (NumberFormatException e) {
+						a = 0;
+					}
+					boolean sexStu = (a == 0) ? false : true;
+					String sBirthDate = (subStrings[3].equals("null")) ? "" : subStrings[3];
+
+					Student studentOne = new Student(subStrings[0], subStrings[1], sexStu, sBirthDate, 0L, null, null,
+							"");
+					addStudent(studentOne);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (MyArrayFullException e) {
+				e.printStackTrace();
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+
+	}
+
 	@Override
 	public String readyToArmy() {
-		
+
 		StringBuilder sb = new StringBuilder();
 		sb.append("Group - " + groupID);
 		sb.append(System.lineSeparator());
@@ -165,11 +250,11 @@ public class Group implements Voenkom{
 			}
 			if (arrStudents[k].getAge() < 18) {
 				continue;
-			}	
-			if (! arrStudents[k].isSex()) {
+			}
+			if (!arrStudents[k].isSex()) {
 				continue;
-			}	
-			sb.append("("+(++i) + ") " + arrStudents[k]);
+			}
+			sb.append("(" + (++i) + ") " + arrStudents[k]);
 			sb.append(System.lineSeparator());
 		}
 		return sb.toString();
@@ -223,10 +308,11 @@ public class Group implements Voenkom{
 
 	public void printMenu() {
 
-		String[] options = { "by Name", "by Age" };
+		String[] options = { "by Name", "by Age", "Settings" };
 		for (;;) {
-			int x = JOptionPane.showOptionDialog(null, "How sort students?", "Print students",
-					JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
+			int x = JOptionPane.showOptionDialog(null, "How sort students?",
+					"Print students to " + ((outToFile) ? "file" : "display"), JOptionPane.DEFAULT_OPTION,
+					JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
 
 			switch (x) {
 			case 0:
@@ -237,35 +323,54 @@ public class Group implements Voenkom{
 				Arrays.sort(arrStudents, new SortedByAge());
 				System.out.println("by Age");
 				break;
-			case -1:
+			case 2:
+				String[] outOptions = { "to Display", "to File" };
+				int k = JOptionPane.showOptionDialog(null, "Choose direction:", "Print students to",
+						JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, outOptions, outOptions[0]);
+
+				switch (k) {
+				case 0:
+					this.outToFile = false;
+					break;
+				case 1:
+					this.outToFile = true;
+					break;
+				}
 				continue;
-			default:
+			case -1:
 				continue;
 			}
 			break;
 		}
 
-		System.out.println(toString());
+		if (outToFile) {
+			toFile();
+		} else {
+			System.out.println(toString());
+		}
 	}
 
 	public void groupMenu() {
 
-		String[] options = { "Add", "Delete", "Print", "Return" };
+		String[] options = { "Import from file", "Add", "Delete", "Print", "Return" };
 		for (;;) {
 			int x = JOptionPane.showOptionDialog(null, "Make your choice", "Group menu", JOptionPane.DEFAULT_OPTION,
-					JOptionPane.INFORMATION_MESSAGE, null, options, options[3]);
+					JOptionPane.INFORMATION_MESSAGE, null, options, options[4]);
 
 			switch (x) {
 			case 0:
-				addMenu();
+				importGroup();
 				continue;
 			case 1:
-				deleteMenu();
+				addMenu();
 				continue;
 			case 2:
-				printMenu();
+				deleteMenu();
 				continue;
 			case 3:
+				printMenu();
+				continue;
+			case 4:
 				break;
 			default:
 				continue;

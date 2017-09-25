@@ -7,12 +7,15 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import javax.swing.JOptionPane;
 
@@ -46,7 +49,7 @@ public class MergeFiles {
 		return true;
 	}
 
-	public void readFile(File f, Set<String> wordSet) {
+	public void readFile(File f, TreeSet<String> wordSet) {
 
 		FileReader fileReader;
 		BufferedReader reader;
@@ -75,6 +78,10 @@ public class MergeFiles {
 					String[] subStrings = line.split(" ");
 
 					for (String s : subStrings) {
+						if (s == null)
+							continue;
+						if (s.equals(""))
+							continue;
 						wordSet.add(s);
 					}
 				}
@@ -84,31 +91,33 @@ public class MergeFiles {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
+	}
 
+	public SortedSet<String> mergeSets(Set<String> wordSet1, Set<String> wordSet2) {
+
+		SortedSet<String> mergedSet = new TreeSet<String>();
+
+		for (String s : wordSet1) {
+			if (wordSet2.contains(s))
+				mergedSet.add(s);
+		}
+
+		return mergedSet;
 	}
 
 	public void writeFile(String fn, Set<String> wordSet) {
 
 		List<String> sortedStrings = new ArrayList<String>(wordSet);
-        Collections.sort(sortedStrings);
-		
-		FileWriter fileWriter;
-		BufferedWriter bw;
+		Collections.sort(sortedStrings);
 
-		try {
-			fileWriter = new FileWriter(new File(fn));
-			bw = new BufferedWriter(fileWriter);
-
+		try (PrintWriter pw = new PrintWriter(fn)) {
 			for (String string : sortedStrings) {
-				bw.write(string);
-				bw.newLine();;
+				pw.println(string);
 			}
-			bw.close();
-			fileWriter.close();
-		} catch (IOException e) {
-			e.printStackTrace();
+			pw.close();
+		} catch (FileNotFoundException e) {
+			System.out.println("ERROR FILE WRITE");
 		}
-
 	}
 
 	public void makeJob() {
@@ -118,19 +127,23 @@ public class MergeFiles {
 		if (!setFile(2))
 			return;
 
-		Set<String> wordSet = new LinkedHashSet<String>();
+		TreeSet<String> wordSet1 = new TreeSet<String>();
+		TreeSet<String> wordSet2 = new TreeSet<String>();
 
-		readFile(f1, wordSet);
-		readFile(f2, wordSet);
+		readFile(f1, wordSet1);
+		readFile(f2, wordSet2);
+		// System.out.println("f1 = " + f1.getPath() + " / count = " +
+		// wordSet1.size());
+		// System.out.println("f2 = " + f2.getPath() + " / count = " +
+		// wordSet2.size());
 
-		wordSet.removeAll(Arrays.asList("", null));
+		SortedSet<String> mergedSet = mergeSets(wordSet1, wordSet2);
 
 		String newFileName = f1.getPath().substring(0, f1.getPath().indexOf(f1.getName()));
 		newFileName = newFileName + "mergefile.txt";
-		writeFile(newFileName, wordSet);
+		writeFile(newFileName, mergedSet);
 
 		System.out.println("Done!");
-
 	}
 
 }

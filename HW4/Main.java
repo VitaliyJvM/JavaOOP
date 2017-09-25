@@ -1,7 +1,5 @@
 package mvs;
 
-import java.util.Comparator;
-
 import javax.swing.JOptionPane;
 
 public class Main {
